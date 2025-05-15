@@ -87,6 +87,7 @@ scheduler:
 dns:
   type: CoreDNS
 etcd:
+<%- if @manage_etcd  -%>
     external:
         caFile: /etc/kubernetes/pki/etcd/ca.crt
         certFile: /etc/kubernetes/pki/etcd/client.crt
@@ -95,6 +96,21 @@ etcd:
           - https://<%= peer %>:2379
 <% end -%>
         keyFile: /etc/kubernetes/pki/etcd/client.key
+<% else -%>
+    local:
+        serverCertSANs:
+        - "<%= @kube_api_advertise_address %>"
+        peerCertSANs:
+        - "<%= @kube_api_advertise_address %>"
+        extraArgs:
+            initial-cluster: <%= @etcd_initial_cluster %>
+            initial-cluster-state: new
+            name: <%= @hostname %>
+            listen-peer-urls: https://<%= @kube_api_advertise_address %>:2380
+            listen-client-urls: https://<%= @kube_api_advertise_address %>:2379
+            advertise-client-urls: https://<%= @kube_api_advertise_address %>:2379
+            initial-advertise-peer-urls: https://<%= @kube_api_advertise_address %>:2380
+<% end -%>
 imageRepository:  <%= @image_repository %>
 kind: ClusterConfiguration
 kubernetesVersion: v<%= @kubernetes_version %>

@@ -328,6 +328,16 @@ class kubernetes::config::kubeadm (
         content => template('kubernetes/etcd/etcd.erb'),
       }
     }
+  } else {
+    if !$delegated_pki {
+      $etcd.each | String $etcd_files | {
+        file { "/etc/kubernetes/pki/etcd/${etcd_files}":
+          ensure  => file,
+          content => template("kubernetes/etcd/${etcd_files}.erb"),
+          mode    => '0600',
+        }
+      }
+    }
   }
 
   if !$delegated_pki {
