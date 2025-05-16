@@ -116,6 +116,7 @@ etcd:
             advertise-client-urls: https://<%= @kube_api_advertise_address %>:2379
             initial-advertise-peer-urls: https://<%= @kube_api_advertise_address %>:2380
 <% end -%>
+<% end -%>
 imageRepository:  <%= @image_repository %>
 <% unless @feature_gates.empty? -%>
 featureGates:
