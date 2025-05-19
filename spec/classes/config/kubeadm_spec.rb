@@ -244,6 +244,75 @@ describe 'kubernetes::config::kubeadm', type: :class do
     it { is_expected.to contain_file('/etc/default/etcd').with_content(%r{ETCD_DATA_DIR="/var/lib/bar"}) }
   end
 
+  context 'manage_etcd => true and etcd_install_method => local' do
+    let(:params) do
+      {
+        'etcd_install_method' => 'local',
+        'kubeadm_extra_config' => { 'foo' => ['bar', 'baz'] },
+        'kubelet_extra_config' => { 'baz' => ['bar', 'foo'] },
+        'kubelet_extra_arguments' => ['foo'],
+        'manage_etcd' => true
+      }
+    end
+
+    it { is_expected.not_to contain_file('/etc/systemd/system/etcd.service') }
+    it { is_expected.not_to contain_file('/etc/default/etcd') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml').with_content(%r{etcd:\n\s*local:\n\s*dataDir: /var/lib/etcd}) }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml').with_content(%r{foo:\n- bar\n- baz}) }
+
+    context 'with etcd_listen_metric_urls defined' do
+      let(:params) do
+        {
+          'etcd_install_method' => 'local',
+          'kubeadm_extra_config' => { 'foo' => ['bar', 'baz'] },
+          'kubelet_extra_config' => { 'baz' => ['bar', 'foo'] },
+          'kubelet_extra_arguments' => ['foo'],
+          'manage_etcd' => true,
+          'etcd_listen_metric_urls' => 'http://0.0.0.0:2381'
+        }
+      end
+
+      it { is_expected.to contain_file('/etc/kubernetes/config.yaml').with_content(%r{etcd:\n\s*local:\n\s*dataDir: /var/lib/etcd\n\s*extraArgs:\n\s*listen-metrics-urls: http://0.0.0.0:2381}) }
+    end
+  end
+
+  context 'manage_etcd => true and etcd_install_method => local and etcd_initial_cluster => "default=http://localhost:2380"' do
+    let(:params) do
+      {
+        'etcd_install_method' => 'local',
+        'kubeadm_extra_config' => { 'foo' => ['bar', 'baz'] },
+        'kubelet_extra_config' => { 'baz' => ['bar', 'foo'] },
+        'kubelet_extra_arguments' => ['foo'],
+        'manage_etcd' => true,
+        'etcd_initial_cluster' => 'default=http://localhost:2380'
+      }
+    end
+
+    it { is_expected.not_to contain_file('/etc/systemd/system/etcd.service') }
+    it { is_expected.not_to contain_file('/etc/default/etcd') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml').with_content(%r{etcd:\n\s*local:\n\s*dataDir: /var/lib/etcd\n\s*extraArgs:\n\s*initial-cluster: default=http://localhost:2380}) }
+  end
+
+  context 'manage_etcd => true and etcd_install_method => local and etcd_data_dir => /var/lib/bar' do
+    let(:params) do
+      {
+        'etcd_install_method' => 'local',
+        'kubeadm_extra_config' => { 'foo' => ['bar', 'baz'] },
+        'kubelet_extra_config' => { 'baz' => ['bar', 'foo'] },
+        'kubelet_extra_arguments' => ['foo'],
+        'manage_etcd' => true,
+        'etcd_data_dir' => '/var/lib/bar'
+      }
+    end
+
+    it { is_expected.not_to contain_file('/etc/systemd/system/etcd.service') }
+    it { is_expected.not_to contain_file('/etc/default/etcd') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml') }
+    it { is_expected.to contain_file('/etc/kubernetes/config.yaml').with_content(%r{etcd:\n\s*local:\n\s*dataDir: /var/lib/bar}) }
+  end
+
   context 'with version = 1.12 and node_name => foo and cloud_provider => aws' do
     let(:params) do
       {

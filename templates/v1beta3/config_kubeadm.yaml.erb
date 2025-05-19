@@ -103,18 +103,14 @@ etcd:
         keyFile: /etc/kubernetes/pki/etcd/client.key
 <%- elsif @etcd_install_method == "local" -%>
     local:
-        serverCertSANs:
-        - "<%= @kube_api_advertise_address %>"
-        peerCertSANs:
-        - "<%= @kube_api_advertise_address %>"
+        dataDir: <%= @etcd_data_dir %>
         extraArgs:
+<%- if @etcd_listen_metric_urls  -%>
+            listen-metrics-urls: <%= @etcd_listen_metric_urls %>
+<%- end -%>
+<%- if @etcd_initial_cluster  -%>
             initial-cluster: <%= @etcd_initial_cluster %>
-            initial-cluster-state: new
-            name: <%= @hostname %>
-            listen-peer-urls: https://<%= @kube_api_advertise_address %>:2380
-            listen-client-urls: https://<%= @kube_api_advertise_address %>:2379
-            advertise-client-urls: https://<%= @kube_api_advertise_address %>:2379
-            initial-advertise-peer-urls: https://<%= @kube_api_advertise_address %>:2380
+<%- end -%>
 <% end -%>
 <%- end -%>
 imageRepository:  <%= @image_repository %>
